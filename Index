@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Participantes</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #F4F4F4;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #3949AB;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .filters input {
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #CCC;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 240px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #CCC;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #3949AB;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background: #F9F9F9;
+        }
+
+        tr:hover {
+            background: #DCE775;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 14px;
+            color: #777;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>📋 Lista de Participantes</h1>
+    </div>
+
+    <div class="container">
+        <div class="filters">
+            <input type="text" id="filterDay" placeholder="Filtrar por Día">
+            <input type="text" id="filterHour" placeholder="Filtrar por Hora">
+            <input type="text" id="filterCourse" placeholder="Filtrar por Curso">
+            <input type="text" id="filterAssistant" placeholder="Filtrar por Asistente">
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Día</th>
+                    <th>Hora</th>
+                    <th>Curso</th>
+                    <th>Asistentes</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        © Lista de Participantes 2025. Todos los derechos reservados.
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+    <script>
+        const googleSheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRILuQnYfi8uWRRM3_9QFn7n_qtekptHiGG9LLApTShe6Un0aj4MxTBNQraX2BhiCs9voEHw0qf16X2/pub?output=csv';
+
+        let data = [];
+
+        async function loadData() {
+            try {
+                const response = await fetch(googleSheetURL);
+                const csvText = await response.text();
+
+                Papa.parse(csvText, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        data = results.data.map(row => [
+                            row["Día"],
+                            row["Hora"],
+                            row["Curso"],
+                            row["Asistentes"]
+                        ]);
+
+                        renderTable();
+                    }
+                });
+            } catch (error) {
+                console.error('Error al cargar los datos:', error);
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            data.forEach(([dia, hora, curso, asistentes]) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${dia}</td>
+                    <td>${hora}</td>
+                    <td>${curso}</td>
+                    <td>${asistentes}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterTable() {
+            const filterDay = document.getElementById("filterDay").value.toLowerCase();
+            const filterHour = document.getElementById("filterHour").value.toLowerCase();
+            const filterCourse = document.getElementById("filterCourse").value.toLowerCase();
+            const filterAssistant = document.getElementById("filterAssistant").value.toLowerCase();
+
+            const filteredData = data.filter(([dia, hora, curso, asistentes]) => {
+                return (
+                    (dia.toLowerCase().includes(filterDay)) &&
+                    (hora.toLowerCase().includes(filterHour)) &&
+                    (curso.toLowerCase().includes(filterCourse)) &&
+                    (asistentes.toLowerCase().includes(filterAssistant))
+                );
+            });
+
+            renderFilteredTable(filteredData);
+        }
+
+        function renderFilteredTable(filteredData) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            filteredData.forEach(([dia, hora, curso, asistentes]) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${dia}</td>
+                    <td>${hora}</td>
+                    <td>${curso}</td>
+                    <td>${asistentes}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        document.getElementById('filterDay').addEventListener('input', filterTable);
+        document.getElementById('filterHour').addEventListener('input', filterTable);
+        document.getElementById('filterCourse').addEventListener('input', filterTable);
+        document.getElementById('filterAssistant').addEventListener('input', filterTable);
+
+        window.onload = loadData;
+    </script>
+
+</body>
+</html>
